@@ -2,16 +2,13 @@ services:
   - type: web
     name: sigmel
     env: node
-    plan: free
     region: oregon
     buildCommand: |
       npm install
-      cd frontend && npm install && npm run build
-      cd ..
-      xcopy frontend\dist backend\public /E /H /Y
-    startCommand: npm start
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 4000
+      cd frontend
+      npm install
+      npm run build
+      xcopy dist "..\backend\public" /E /H /Y
+    startCommand: node backend/server.js
+    plan: free
+    autoDeploy: true
