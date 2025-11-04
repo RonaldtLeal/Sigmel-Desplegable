@@ -1,0 +1,18 @@
+{
+  "name": "sigmel-fullstack",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Materiales del Laboratorio de Electrónica (SIGMEL) - Proyecto Fullstack",
+  "main": "backend/server.js",
+  "private": true,
+  "scripts": {
+    "dev": "npm-run-all --parallel dev:backend dev:frontend",
+    "dev:backend": "cd backend && npx nodemon server.js",
+    "dev:frontend": "cd frontend && npx vite",
+    "build": "cd frontend && npm run build",
+    "postbuild": "cp -r frontend/dist backend/public",
+    "start": "cd backend && node server.js"
+  },
+  "dependencies": {
+    "npm-run-all": "^4.1.5"
+  }
+}
