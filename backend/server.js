@@ -34,15 +34,12 @@ const clientPath = path.join(__dirname, "public");
 app.use(express.static(clientPath));
 
 // 🛠️ Capturar cualquier otra ruta y devolver index.html (Express 5)
-app.get("/*", (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(clientPath, "index.html"));
 });
 
 // 🚀 Iniciar servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  console.log("🖼️ Carpeta de imágenes disponible en /uploads");
-});
-
   console.log("🖼️ Carpeta de imágenes disponible en /uploads");
 });
