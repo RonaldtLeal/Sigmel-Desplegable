@@ -29,6 +29,9 @@ import {
   Line,
 } from "recharts";
 
+// 🌐 URL dinámica del backend (Render o local)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 export default function Dashboard() {
   const [datos, setDatos] = useState({});
   const [ultimosPrestamos, setUltimosPrestamos] = useState([]);
@@ -41,11 +44,11 @@ export default function Dashboard() {
   const cargarDatos = async () => {
     try {
       const [res, ultimos, top, low, dia] = await Promise.all([
-        axios.get("http://localhost:4000/api/dashboard"),
-        axios.get("http://localhost:4000/api/dashboard/ultimos"),
-        axios.get("http://localhost:4000/api/dashboard/top"),
-        axios.get("http://localhost:4000/api/dashboard/menor-stock"),
-        axios.get("http://localhost:4000/api/dashboard/por-dia"),
+        axios.get(`${API_URL}/api/dashboard`),
+        axios.get(`${API_URL}/api/dashboard/ultimos`),
+        axios.get(`${API_URL}/api/dashboard/top`),
+        axios.get(`${API_URL}/api/dashboard/menor-stock`),
+        axios.get(`${API_URL}/api/dashboard/por-dia`),
       ]);
 
       setDatos(res.data);
