@@ -41,8 +41,8 @@ app.use("/api/reportes", reportesRoutes);
 const clientPath = path.join(__dirname, "public");
 app.use(express.static(clientPath));
 
-// 🛠️ Capturar cualquier otra ruta y devolver index.html (para React Router)
-app.get("*", (req, res) => {
+// 🛠️ Capturar cualquier ruta que NO sea /api (Express 5 compatible)
+app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(clientPath, "index.html"));
 });
 
