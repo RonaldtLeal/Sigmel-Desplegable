@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  BrowserRouter as Router,
+  BrowserRouter,
   Routes,
   Route,
   Navigate,
@@ -37,7 +37,7 @@ export default function App() {
     }
   }, [user]);
 
-  // ⏳ Pantalla de carga breve mientras se valida la sesión
+  // ⏳ Pantalla de carga mientras se valida la sesión
   if (loading) {
     return (
       <Box
@@ -59,7 +59,7 @@ export default function App() {
   }
 
   return (
-    <Router>
+    <BrowserRouter basename="/">
       <Routes>
         {/* 🔐 Ruta pública: Login */}
         <Route path="/" element={<Login setUser={setUser} />} />
@@ -91,6 +91,7 @@ export default function App() {
         {/* 🧭 Fallback: redirige todo lo desconocido al login */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
+
