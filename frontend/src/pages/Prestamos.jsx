@@ -19,6 +19,9 @@ import {
 } from "@mui/material";
 import axios from "axios";
 
+// 🌐 URL dinámica del backend (Render o local)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 export default function Prestamos() {
   const [prestamos, setPrestamos] = useState([]);
   const [loadingId, setLoadingId] = useState(null);
@@ -33,12 +36,10 @@ export default function Prestamos() {
       setErrorMsg("");
 
       if (user?.rol === "admin") {
-        const res = await axios.get("http://localhost:4000/api/prestamos");
+        const res = await axios.get(`${API_URL}/api/prestamos`);
         setPrestamos(res.data || []);
       } else if (user?.rol === "usuario") {
-        const res = await axios.get(
-          `http://localhost:4000/api/prestamos/usuario/${user.id}`
-        );
+        const res = await axios.get(`${API_URL}/api/prestamos/usuario/${user.id}`);
         setPrestamos(res.data || []);
       }
     } catch (err) {
@@ -57,10 +58,9 @@ export default function Prestamos() {
   const cambiarEstado = async (id, nuevoEstado) => {
     try {
       setLoadingId(id);
-      await axios.put(
-        `http://localhost:4000/api/prestamos/cambiarEstado/${id}`,
-        { estado: nuevoEstado }
-      );
+      await axios.put(`${API_URL}/api/prestamos/cambiarEstado/${id}`, {
+        estado: nuevoEstado,
+      });
       setAlerta({
         tipo: "success",
         mensaje: `✅ Estado cambiado a "${nuevoEstado}".`,
@@ -261,7 +261,7 @@ export default function Prestamos() {
                     height="160"
                     image={
                       p.imagen
-                        ? `http://localhost:4000/uploads/${p.imagen}`
+                        ? `${API_URL}/uploads/${p.imagen}`
                         : "https://via.placeholder.com/200x150?text=Sin+Imagen"
                     }
                     alt={p.material}
