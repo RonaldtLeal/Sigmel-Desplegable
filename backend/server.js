@@ -15,9 +15,17 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // 🧩 Middleware global
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 🌍 Configurar CORS dinámico
+const allowedOrigin = process.env.CORS_ORIGIN || "*";
+app.use(
+  cors({
+    origin: allowedOrigin,
+    credentials: true,
+  })
+);
 
 // 🖼️ Servir imágenes del directorio /uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -33,13 +41,13 @@ app.use("/api/reportes", reportesRoutes);
 const clientPath = path.join(__dirname, "public");
 app.use(express.static(clientPath));
 
-// 🛠️ Capturar cualquier otra ruta y devolver index.html (Express 5)
-app.use((req, res) => {
+// 🛠️ Capturar cualquier otra ruta y devolver index.html (para React Router)
+app.get("*", (req, res) => {
   res.sendFile(path.join(clientPath, "index.html"));
 });
 
 // 🚀 Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  console.log("🖼️ Carpeta de imágenes disponible en /uploads");
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
+  console.log(`🌍 CORS permitido para: ${allowedOrigin}`);
 });
