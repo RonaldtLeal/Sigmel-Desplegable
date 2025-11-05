@@ -24,6 +24,9 @@ import {
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
+// 🌐 URL dinámica del backend (Render o local)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 export default function Inventario() {
   const [materiales, setMateriales] = useState([]);
   const [tabValue, setTabValue] = useState(0);
@@ -50,13 +53,13 @@ export default function Inventario() {
   // 🔹 Obtener materiales desde el backend
   const obtenerMateriales = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/api/materiales");
+      const res = await axios.get(`${API_URL}/api/materiales`);
       setMateriales(res.data);
       setErrorMsg("");
     } catch (err) {
       console.error("❌ Error al obtener materiales:", err);
       setErrorMsg(
-        "Error al obtener los materiales desde el servidor. Verifica que el backend esté corriendo en el puerto 4000."
+        "Error al obtener los materiales desde el servidor. Verifica la conexión o el backend."
       );
     }
   };
@@ -106,7 +109,7 @@ export default function Inventario() {
       }
 
       for (let item of reserva) {
-        await axios.post("http://localhost:4000/api/prestamos/reservar", {
+        await axios.post(`${API_URL}/api/prestamos/reservar`, {
           usuario_id: user.id,
           material_id: item.id,
           cantidad: item.cantidad_reservada,
@@ -259,7 +262,7 @@ export default function Inventario() {
                         height="180"
                         image={
                           material.imagen
-                            ? `http://localhost:4000/uploads/${material.imagen}`
+                            ? `${API_URL}/uploads/${material.imagen}`
                             : "https://via.placeholder.com/200x150?text=Sin+Imagen"
                         }
                         alt={material.nombre}
@@ -309,10 +312,10 @@ export default function Inventario() {
       {tabValue === 1 && user?.rol === "admin" && (
         <Paper sx={{ p: 3, backgroundColor: "#e3f2fd", borderRadius: 2 }}>
           <Typography sx={{ mb: 2 }}>
-            ⚠ En esta version no se pueden agregar materiales dinámicamente.
+            ⚠ En esta versión no se pueden agregar materiales dinámicamente.
             <br />
             Se debe editar directamente el archivo{" "}
-            <b>backend/database/sigmel.sql</b> y reiniciando el servidor.
+            <b>backend/database/sigmel.sql</b> y reiniciar el servidor.
           </Typography>
         </Paper>
       )}
