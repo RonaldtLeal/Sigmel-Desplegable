@@ -20,6 +20,7 @@ import {
   Paper,
   IconButton,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
@@ -34,6 +35,7 @@ export default function Inventario() {
   const [errorMsg, setErrorMsg] = useState("");
   const [reserva, setReserva] = useState([]);
   const [alerta, setAlerta] = useState({ tipo: "", mensaje: "" });
+  const [loading, setLoading] = useState(true);
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -52,15 +54,16 @@ export default function Inventario() {
 
   // 🔹 Obtener materiales desde el backend
   const obtenerMateriales = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/materiales`);
-      setMateriales(res.data);
+      setMateriales(Array.isArray(res.data) ? res.data : []);
       setErrorMsg("");
     } catch (err) {
       console.error("❌ Error al obtener materiales:", err);
-      setErrorMsg(
-        "Error al obtener los materiales desde el servidor. Verifica la conexión o el backend."
-      );
+      setErrorMsg("No se pudo conectar con el servidor SIGMEL.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,6 +130,27 @@ export default function Inventario() {
       });
     }
   };
+
+  // 🕐 Pantalla de carga
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          backgroundColor: "#f5f6fa",
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Cargando materiales disponibles...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -256,7 +280,7 @@ export default function Inventario() {
                 )
                 .map((material) => (
                   <Grid item xs={12} sm={6} md={4} lg={3} key={material.id}>
-                    <Card>
+                    <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
                       <CardMedia
                         component="img"
                         height="180"
