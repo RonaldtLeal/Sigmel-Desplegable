@@ -9,6 +9,9 @@ import {
   ListItem,
   ListItemText,
   Chip,
+  Alert,
+  Button,
+  CircularProgress,
 } from "@mui/material";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -29,7 +32,7 @@ import {
   Line,
 } from "recharts";
 
-// 🌐 URL dinámica del backend (Render o local)
+// 🌐 URL dinámica (Render o local)
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 export default function Dashboard() {
@@ -38,10 +41,14 @@ export default function Dashboard() {
   const [topMateriales, setTopMateriales] = useState([]);
   const [menorStock, setMenorStock] = useState([]);
   const [prestamosPorDia, setPrestamosPorDia] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const COLORS = ["#1976d2", "#b71c1c", "#0288d1", "#8e24aa", "#2e7d32"];
 
+  // 🔁 Cargar todos los datos del backend
   const cargarDatos = async () => {
+    setLoading(true);
     try {
       const [res, ultimos, top, low, dia] = await Promise.all([
         axios.get(`${API_URL}/api/dashboard`),
@@ -51,13 +58,17 @@ export default function Dashboard() {
         axios.get(`${API_URL}/api/dashboard/por-dia`),
       ]);
 
-      setDatos(res.data);
-      setUltimosPrestamos(ultimos.data);
-      setTopMateriales(top.data);
-      setMenorStock(low.data);
-      setPrestamosPorDia(dia.data);
+      setDatos(res.data || {});
+      setUltimosPrestamos(ultimos.data || []);
+      setTopMateriales(top.data || []);
+      setMenorStock(low.data || []);
+      setPrestamosPorDia(dia.data || []);
+      setError(null);
     } catch (err) {
       console.error("❌ Error al cargar datos del dashboard:", err);
+      setError("No se pudo obtener información del servidor SIGMEL.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,11 +76,58 @@ export default function Dashboard() {
     cargarDatos();
   }, []);
 
+  // 📊 Preparar datos de inventario
   const inventarioData = [
-    { name: "Disponibles", value: datos.inventario - datos.stock_bajo },
-    { name: "Stock Bajo", value: datos.stock_bajo },
+    { name: "Disponibles", value: (datos.inventario || 0) - (datos.stock_bajo || 0) },
+    { name: "Stock Bajo", value: datos.stock_bajo || 0 },
   ];
 
+  // ⏳ Pantalla de carga
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          backgroundColor: "#f4f6f8",
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Cargando estadísticas del laboratorio...
+        </Typography>
+      </Box>
+    );
+  }
+
+  // ⚠️ Error de conexión
+  if (error) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          backgroundColor: "#f4f6f8",
+          textAlign: "center",
+        }}
+      >
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Button variant="contained" color="primary" onClick={cargarDatos}>
+          Reintentar conexión
+        </Button>
+      </Box>
+    );
+  }
+
+  // ✅ Dashboard principal
   return (
     <Box
       sx={{
@@ -105,36 +163,11 @@ export default function Dashboard() {
           width: "100%",
         }}
       >
-        <KPI
-          icon={<InventoryIcon />}
-          label="Materiales Totales"
-          value={datos.inventario}
-          color="#1565c0"
-        />
-        <KPI
-          icon={<AssignmentIcon />}
-          label="Préstamos Activos"
-          value={datos.prestamos}
-          color="#8e24aa"
-        />
-        <KPI
-          icon={<WarningIcon />}
-          label="Stock Bajo"
-          value={datos.stock_bajo}
-          color="#f57c00"
-        />
-        <KPI
-          icon={<AssignmentIcon />}
-          label="Préstamos del Día"
-          value={datos.prestamos_hoy}
-          color="#0288d1"
-        />
-        <KPI
-          icon={<AssignmentIcon />}
-          label="Devoluciones del Día"
-          value={datos.devoluciones_hoy}
-          color="#43a047"
-        />
+        <KPI icon={<InventoryIcon />} label="Materiales Totales" value={datos.inventario} color="#1565c0" />
+        <KPI icon={<AssignmentIcon />} label="Préstamos Activos" value={datos.prestamos} color="#8e24aa" />
+        <KPI icon={<WarningIcon />} label="Stock Bajo" value={datos.stock_bajo} color="#f57c00" />
+        <KPI icon={<AssignmentIcon />} label="Préstamos del Día" value={datos.prestamos_hoy} color="#0288d1" />
+        <KPI icon={<AssignmentIcon />} label="Devoluciones del Día" value={datos.devoluciones_hoy} color="#43a047" />
       </Grid>
 
       {/* Sección de gráficas principales */}
@@ -166,7 +199,7 @@ export default function Dashboard() {
           </PieChart>
         </Grafico>
 
-        {/* 📈 Nuevo gráfico de préstamos por día */}
+        {/* 📈 Gráfico de préstamos por día */}
         <Grafico title="Préstamos por Día (últimos 30 días)">
           <LineChart data={prestamosPorDia}>
             <XAxis
@@ -199,7 +232,7 @@ export default function Dashboard() {
           </LineChart>
         </Grafico>
 
-        {/* 🧩 Fila separada para que ambos cuadros tengan mismo ancho */}
+        {/* 🧩 Tablas complementarias */}
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <Paper sx={cardStyle}>
@@ -208,22 +241,20 @@ export default function Dashboard() {
               </Typography>
               <Divider sx={{ mb: 2 }} />
               <List dense sx={{ flex: 1, overflowY: "auto" }}>
-                {menorStock.map((item, i) => (
-                  <ListItem key={i}>
-                    <ListItemText
-                      primary={
-                        <Typography sx={{ fontWeight: 600 }}>
-                          {item.nombre}
-                        </Typography>
-                      }
-                      secondary={
-                        <Typography variant="body2">
-                          Cantidad: {item.cantidad}
-                        </Typography>
-                      }
-                    />
-                  </ListItem>
-                ))}
+                {menorStock.length > 0 ? (
+                  menorStock.map((item, i) => (
+                    <ListItem key={i}>
+                      <ListItemText
+                        primary={<Typography sx={{ fontWeight: 600 }}>{item.nombre}</Typography>}
+                        secondary={<Typography variant="body2">Cantidad: {item.cantidad}</Typography>}
+                      />
+                    </ListItem>
+                  ))
+                ) : (
+                  <Typography variant="body2" color="text.secondary" align="center">
+                    No hay materiales con stock bajo.
+                  </Typography>
+                )}
               </List>
             </Paper>
           </Grid>
@@ -235,46 +266,41 @@ export default function Dashboard() {
               </Typography>
               <Divider sx={{ mb: 2 }} />
               <List dense sx={{ flex: 1, overflowY: "auto" }}>
-                {ultimosPrestamos.map((p, i) => (
-                  <ListItem key={i}>
-                    <ListItemText
-                      primary={
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {p.material}
-                        </Typography>
-                      }
-                      secondary={
-                        <>
-                          <Typography variant="body2" color="text.secondary">
-                            {p.usuario} –{" "}
-                            {new Date(p.fecha_prestamo).toLocaleDateString(
-                              "es-MX"
-                            )}
+                {ultimosPrestamos.length > 0 ? (
+                  ultimosPrestamos.map((p, i) => (
+                    <ListItem key={i}>
+                      <ListItemText
+                        primary={
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                            {p.material}
                           </Typography>
-                          <Chip
-                            label={p.estado}
-                            size="small"
-                            sx={{
-                              mt: 0.5,
-                              bgcolor:
-                                p.estado === "devuelto"
-                                  ? "#c8e6c9"
-                                  : "#bbdefb",
-                              color:
-                                p.estado === "devuelto"
-                                  ? "#2e7d32"
-                                  : "#1565c0",
-                              fontWeight: "bold",
-                            }}
-                          />
-                        </>
-                      }
-                    />
-                  </ListItem>
-                ))}
+                        }
+                        secondary={
+                          <>
+                            <Typography variant="body2" color="text.secondary">
+                              {p.usuario} –{" "}
+                              {new Date(p.fecha_prestamo).toLocaleDateString("es-MX")}
+                            </Typography>
+                            <Chip
+                              label={p.estado}
+                              size="small"
+                              sx={{
+                                mt: 0.5,
+                                bgcolor: p.estado === "devuelto" ? "#c8e6c9" : "#bbdefb",
+                                color: p.estado === "devuelto" ? "#2e7d32" : "#1565c0",
+                                fontWeight: "bold",
+                              }}
+                            />
+                          </>
+                        }
+                      />
+                    </ListItem>
+                  ))
+                ) : (
+                  <Typography variant="body2" color="text.secondary" align="center">
+                    No hay préstamos recientes.
+                  </Typography>
+                )}
               </List>
             </Paper>
           </Grid>
