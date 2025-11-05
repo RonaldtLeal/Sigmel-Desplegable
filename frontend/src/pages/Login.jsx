@@ -4,6 +4,9 @@ import axios from "axios";
 import logoUnicaribe from "../assets/logo-unicaribe.png";
 import "../index.css";
 
+// 🌐 URL dinámica del backend
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 export default function Login({ setUser }) {
   const [matricula, setMatricula] = useState("");
   const [password, setPassword] = useState("");
@@ -15,8 +18,8 @@ export default function Login({ setUser }) {
     setError(""); // Limpia errores anteriores
 
     try {
-      // 🔗 Ruta dinámica para backend
-      const res = await axios.post("/api/login", { matricula, password });
+      // 🔗 Llamada al backend usando la URL dinámica
+      const res = await axios.post(`${API_URL}/api/login`, { matricula, password });
 
       const user = res.data;
       if (!user || !user.rol) {
@@ -65,7 +68,6 @@ export default function Login({ setUser }) {
         <input
           type="password"
           id="password"
-          placeholder=""
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
