@@ -28,7 +28,10 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 
-import uniLogo from "../assets/logo-unicaribe.png"; // <<--- Logo
+import uniLogo from "../assets/logo-unicaribe.png";
+
+// 🌐 URL dinámica del backend (Render o local)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 export default function Reportes() {
   const [inicio, setInicio] = useState("");
@@ -44,7 +47,7 @@ export default function Reportes() {
     if (!inicio || !fin) return alert("Selecciona un rango de fechas válido.");
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:4000/api/reportes", {
+      const res = await axios.get(`${API_URL}/api/reportes`, {
         params: { inicio, fin },
       });
       setReporte(res.data);
@@ -57,14 +60,13 @@ export default function Reportes() {
   };
 
   // ============================================================
-  //  Exportar a PDF (multipágina) — sin recortar nada del reporte
+  //  Exportar a PDF (multipágina)
   // ============================================================
   const descargarPDF = async () => {
     const input = reportRef.current;
     if (!input) return alert("No hay reporte para exportar.");
 
-    // Render del contenedor a un canvas grande
-    const scale = 2; // nitidez
+    const scale = 2;
     const canvas = await html2canvas(input, {
       scale,
       useCORS: true,
@@ -72,61 +74,45 @@ export default function Reportes() {
       scrollY: -window.scrollY,
     });
 
-    // Config PDF
     const pdf = new jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
-    const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
     const marginLeft = 10;
     const marginRight = 10;
     const marginBottom = 10;
-    const headerTop = 12; // encabezado en página 1
+    const headerTop = 12;
     const imgX = marginLeft;
     const imgW = pageWidth - marginLeft - marginRight;
 
-    // Dibujar encabezado textual (solo página 1)
     const drawHeader = () => {
       try {
-        // logo a la izquierda
         pdf.addImage(uniLogo, "PNG", 10, 6, 24, 12);
       } catch {}
       pdf.setFont("helvetica", "bold");
       pdf.setTextColor(25, 118, 210);
       pdf.setFontSize(18);
       pdf.text("Universidad del Caribe", 37, headerTop + 4);
-
       pdf.setFontSize(12);
       pdf.text("SIGMEL - Sistema de Administración de Materiales", 37, headerTop + 10);
-
       pdf.setFont("helvetica", "bold");
       pdf.setTextColor(0, 0, 0);
       pdf.setFontSize(13);
       pdf.text("Reporte de Préstamos y Devoluciones", 10, headerTop + 20);
-
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(11);
       const rango = `Rango: ${inicio} — ${fin}`;
       pdf.text(rango, 10, headerTop + 26);
-
-      // línea separadora
       pdf.setDrawColor(25, 118, 210);
       pdf.line(10, headerTop + 28, pageWidth - 10, headerTop + 28);
     };
 
-    // calcular alturas y trocear canvas a páginas A4
-    // alto de la imagen (en mm) si la ajustamos al ancho imgW
-    const imgH_All = (canvas.height * imgW) / canvas.width; // mm totales
-    // cuántos píxeles hay por mm en este render
+    const imgH_All = (canvas.height * imgW) / canvas.width;
     const pxPerMm = canvas.height / imgH_All;
-
-    // altura útil en la página 1 (dejamos espacio al encabezado)
     const usableFirstPageHeight = pageHeight - (headerTop + 30) - marginBottom;
     const usableNextPagesHeight = pageHeight - 2 * marginBottom;
-
-    // altura útil en píxeles a recortar por página
     const sliceFirstPx = Math.floor(usableFirstPageHeight * pxPerMm);
     const sliceNextPx = Math.floor(usableNextPagesHeight * pxPerMm);
-
-    let yPx = 0; // punto inicial del corte (en píxeles del canvas)
+    let yPx = 0;
     let pageIndex = 0;
 
     while (yPx < canvas.height) {
@@ -135,7 +121,6 @@ export default function Reportes() {
           ? Math.min(sliceFirstPx, canvas.height - yPx)
           : Math.min(sliceNextPx, canvas.height - yPx);
 
-      // crear un canvas parcial para esta página
       const pageCanvas = document.createElement("canvas");
       pageCanvas.width = canvas.width;
       pageCanvas.height = sliceHeightPx;
@@ -182,7 +167,7 @@ export default function Reportes() {
 
   return (
     <Box sx={{ p: 4, backgroundColor: "#f4f6fb", minHeight: "100vh" }}>
-      {/* Encabezado visual en pantalla */}
+      {/* Encabezado visual */}
       <Paper
         elevation={3}
         sx={{
@@ -208,7 +193,6 @@ export default function Reportes() {
               SIGMEL - Sistema de Administración de Materiales
             </Typography>
           </Box>
-
           <AssessmentIcon sx={{ fontSize: 46, opacity: 0.9 }} />
         </Box>
 
@@ -330,21 +314,11 @@ export default function Reportes() {
               ))}
             </Grid>
 
-            {/* Rotación + Estado del Inventario (centradas) */}
-            <Grid
-              container
-              spacing={3}
-              sx={{ mb: 4 }}
-              justifyContent="center"
-              alignItems="stretch"
-            >
-              {/* Barras */}
+            {/* Rotación + Estado del Inventario */}
+            <Grid container spacing={3} sx={{ mb: 4 }} justifyContent="center" alignItems="stretch">
               <Grid item xs={12} md={10} lg={8}>
                 <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 2 }}>
-                  <Typography
-                    variant="h6"
-                    sx={{ color: "#1565c0", fontWeight: "bold", mb: 2 }}
-                  >
+                  <Typography variant="h6" sx={{ color: "#1565c0", fontWeight: "bold", mb: 2 }}>
                     📊 Rotación de Materiales
                   </Typography>
 
@@ -371,27 +345,15 @@ export default function Reportes() {
                     />
                   </Box>
 
-                  {/* Leyenda inferior personalizada y centrada */}
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: 3,
-                      mt: 1.5,
-                    }}
-                  >
+                  <Box sx={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 3, mt: 1.5 }}>
                     {reporte.rotacion.map((r, i) => (
                       <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Box
-                          sx={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: "50%",
-                            backgroundColor: colores[i % colores.length],
-                          }}
-                        />
+                        <Box sx={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: "50%",
+                          backgroundColor: colores[i % colores.length],
+                        }} />
                         <Typography variant="body2">
                           {r.material} ({r.rotacion}%)
                         </Typography>
@@ -404,10 +366,7 @@ export default function Reportes() {
               {/* Dona */}
               <Grid item xs={12} md={10} lg={8}>
                 <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 2 }}>
-                  <Typography
-                    variant="h6"
-                    sx={{ color: "#1565c0", fontWeight: "bold", mb: 2 }}
-                  >
+                  <Typography variant="h6" sx={{ color: "#1565c0", fontWeight: "bold", mb: 2 }}>
                     🧩 Estado del Inventario
                   </Typography>
                   <PieChart
@@ -421,8 +380,6 @@ export default function Reportes() {
                         })),
                         innerRadius: 60,
                         outerRadius: 120,
-                        highlightScope: { faded: "global", highlighted: "item" },
-                        faded: { innerRadius: 60, additionalRadius: -20, color: "gray" },
                       },
                     ]}
                     margin={{ right: 170 }}
