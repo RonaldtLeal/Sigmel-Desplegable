@@ -16,11 +16,14 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 🔁 Cargar materiales desde el backend local
+  // 🌍 URL dinámica (Render o local)
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
+  // 🔁 Cargar materiales desde el backend
   const fetchInventario = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:4000/api/materiales");
+      const res = await axios.get(`${API_URL}/api/materiales`);
       if (Array.isArray(res.data)) {
         setInventario(res.data);
       } else {
@@ -30,7 +33,7 @@ export default function AdminPanel() {
       setError(null);
     } catch (err) {
       console.error("❌ Error al obtener materiales:", err);
-      setError("Error al obtener los materiales desde el servidor local.");
+      setError("Error al obtener los materiales desde el servidor.");
     } finally {
       setLoading(false);
     }
@@ -91,7 +94,7 @@ export default function AdminPanel() {
           {error}
         </Typography>
         <Typography variant="body1" sx={{ mb: 2 }}>
-          Verifica que el servidor backend esté corriendo en el puerto <b>4000</b>.
+          Verifica la conexión con el servidor SIGMEL.
         </Typography>
         <Button variant="contained" color="primary" onClick={fetchInventario}>
           Reintentar conexión
