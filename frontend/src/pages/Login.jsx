@@ -4,26 +4,27 @@ import axios from "axios";
 import logoUnicaribe from "../assets/logo-unicaribe.png";
 import "../index.css";
 
-// 🌐 URL dinámica del backend
+// 🌐 URL dinámica del backend (Render o local)
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 export default function Login({ setUser }) {
   const [matricula, setMatricula] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(""); // Limpia errores anteriores
+    setError("");
+    setLoading(true);
 
     try {
-      // 🔗 Llamada al backend usando la URL dinámica
       const res = await axios.post(`${API_URL}/api/login`, { matricula, password });
 
       const user = res.data;
       if (!user || !user.rol) {
-        setError("Error: datos de usuario inválidos");
+        setError("Error: datos de usuario inválidos.");
         return;
       }
 
@@ -34,16 +35,18 @@ export default function Login({ setUser }) {
       // 🔀 Redirección según el rol
       if (user.rol === "admin") navigate("/admin");
       else if (user.rol === "usuario") navigate("/usuario");
-      else setError("Rol de usuario desconocido");
-
+      else setError("Rol de usuario desconocido.");
     } catch (err) {
       console.error("❌ Error al iniciar sesión:", err.response?.data || err.message);
 
-      if (err.response?.status === 400) setError("Faltan datos de inicio de sesión");
-      else if (err.response?.status === 401) setError("Matrícula o contraseña incorrecta");
-      else setError("Error al conectar con el servidor");
+      if (err.response?.status === 400) setError("Faltan datos de inicio de sesión.");
+      else if (err.response?.status === 401)
+        setError("Matrícula o contraseña incorrecta.");
+      else setError("Error al conectar con el servidor SIGMEL.");
 
-      setPassword(""); // Limpia el campo de contraseña
+      setPassword("");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,6 +65,7 @@ export default function Login({ setUser }) {
           value={matricula}
           onChange={(e) => setMatricula(e.target.value)}
           required
+          disabled={loading}
         />
 
         <label htmlFor="password">Contraseña</label>
@@ -71,9 +75,12 @@ export default function Login({ setUser }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          disabled={loading}
         />
 
-        <button type="submit">Entrar</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Verificando..." : "Entrar"}
+        </button>
       </form>
 
       {error && <p className="error-message">{error}</p>}
