@@ -32,21 +32,24 @@ export default function Prestamos() {
 
   // 🔹 Cargar préstamos del usuario o admin
   const cargarPrestamos = async () => {
+    if (!user) {
+      setErrorMsg("No hay sesión activa. Vuelve a iniciar sesión.");
+      return;
+    }
+
     try {
       setErrorMsg("");
 
-      if (user?.rol === "admin") {
-        const res = await axios.get(`${API_URL}/api/prestamos`);
-        setPrestamos(res.data || []);
-      } else if (user?.rol === "usuario") {
-        const res = await axios.get(`${API_URL}/api/prestamos/usuario/${user.id}`);
-        setPrestamos(res.data || []);
-      }
+      const endpoint =
+        user.rol === "admin"
+          ? `${API_URL}/api/prestamos`
+          : `${API_URL}/api/prestamos/usuario/${user.id}`;
+
+      const res = await axios.get(endpoint);
+      setPrestamos(res.data || []);
     } catch (err) {
       console.error("❌ Error al obtener préstamos:", err);
-      setErrorMsg(
-        "No se pudo conectar con el servidor o no hay datos disponibles."
-      );
+      setErrorMsg("No se pudo conectar con el servidor o no hay datos disponibles.");
     }
   };
 
@@ -54,7 +57,7 @@ export default function Prestamos() {
     cargarPrestamos();
   }, []);
 
-  // 🔹 Cambiar estado del préstamo
+  // 🔹 Cambiar estado del préstamo (solo admin)
   const cambiarEstado = async (id, nuevoEstado) => {
     try {
       setLoadingId(id);
