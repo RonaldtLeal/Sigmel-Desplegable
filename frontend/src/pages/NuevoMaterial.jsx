@@ -1,4 +1,8 @@
 import { useState } from "react";
+import axios from "axios";
+
+// 🌐 URL dinámica del backend (Render o local)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 export default function NuevoMaterial() {
   const [nombre, setNombre] = useState("");
@@ -6,6 +10,7 @@ export default function NuevoMaterial() {
   const [imagen, setImagen] = useState("");
   const [categoria, setCategoria] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const categorias = [
     "Instrumentos de medición",
@@ -15,19 +20,37 @@ export default function NuevoMaterial() {
     "Herramientas",
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 🧩 Como no hay BD activa, solo mostramos mensaje informativo
-    setMensaje(
-      "⚠ Esta versión funciona en modo lectura. Para agregar materiales reales, edita el archivo backend/database/sigmel.sql y reinicia el servidor."
-    );
+    if (!nombre || !cantidad || !categoria) {
+      setMensaje("⚠️ Por favor completa todos los campos requeridos.");
+      return;
+    }
 
-    // Limpiar campos
-    setNombre("");
-    setCantidad("");
-    setImagen("");
-    setCategoria("");
+    try {
+      setLoading(true);
+      // 🧩 Petición real (si backend acepta POST /api/materiales)
+      await axios.post(`${API_URL}/api/materiales`, {
+        nombre,
+        cantidad,
+        categoria,
+        imagen,
+      });
+
+      setMensaje("✅ Material agregado correctamente.");
+    } catch (err) {
+      console.error("❌ Error al registrar material:", err);
+      setMensaje(
+        "⚠️ Esta versión funciona en modo lectura. Para agregar materiales reales, edita el archivo backend/database/sigmel.sql y reinicia el servidor."
+      );
+    } finally {
+      setNombre("");
+      setCantidad("");
+      setImagen("");
+      setCategoria("");
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,7 +65,7 @@ export default function NuevoMaterial() {
       }}
     >
       <h2 style={{ marginBottom: "1rem", color: "#0d47a1" }}>
-        ➕ Agregar Nuevo Material (modo local)
+        ➕ Agregar Nuevo Material
       </h2>
 
       <form onSubmit={handleSubmit}>
@@ -66,6 +89,7 @@ export default function NuevoMaterial() {
           <label>Cantidad disponible:</label>
           <input
             type="number"
+            min="1"
             value={cantidad}
             onChange={(e) => setCantidad(e.target.value)}
             required
@@ -101,7 +125,7 @@ export default function NuevoMaterial() {
         </div>
 
         <div style={{ marginBottom: "1rem" }}>
-          <label>URL de imagen (GitHub, etc.):</label>
+          <label>URL de imagen (opcional):</label>
           <input
             type="text"
             value={imagen}
@@ -118,25 +142,26 @@ export default function NuevoMaterial() {
 
         <button
           type="submit"
+          disabled={loading}
           style={{
             padding: "0.8rem 1rem",
-            backgroundColor: "#1565c0",
+            backgroundColor: loading ? "#9e9e9e" : "#1565c0",
             color: "#fff",
             border: "none",
             borderRadius: "6px",
             fontWeight: "bold",
-            cursor: "pointer",
+            cursor: loading ? "not-allowed" : "pointer",
             width: "100%",
           }}
         >
-          Registrar
+          {loading ? "Guardando..." : "Registrar"}
         </button>
 
         {mensaje && (
           <p
             style={{
               marginTop: "1rem",
-              color: "#333",
+              color: mensaje.includes("⚠️") ? "#c62828" : "#1b5e20",
               backgroundColor: "#e3f2fd",
               padding: "0.8rem",
               borderRadius: "8px",
